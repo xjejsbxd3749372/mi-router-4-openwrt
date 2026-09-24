@@ -11,12 +11,12 @@
 ## 内置功能
 
 - LuCI 中文界面（zh-cn）
-- **PassWall / SSR-Plus**：SS / SSR / **V2Ray（VLESS + WS + TLS）** / Trojan / Socks5
-- V2Ray 4.23.1（支持 VLESS、WebSocket 传输、TLS 加密）
+- **PassWall / SSR-Plus**：SS / SSR / **Xray（VLESS + WS + TLS）** / Trojan / Socks5
+- **Xray Core**：适配 SSR Plus 的 Xray 节点类型
 - Trojan、Kcptun、Redsocks2、Shadowsocks、simple-obfs、v2ray-plugin
 - TCP BBR 加速、dnsmasq-full、TProxy 透明代理支持
 
-> VLESS + WS + TLS 通过「服务 → 科学上网（SSR Plus+）」里的 V2Ray 节点类型配置：
+> VLESS + WS + TLS 通过「服务 → 科学上网（SSR Plus+）」中的 Xray 节点类型配置：
 > 协议选 `VLESS`，传输选 `WebSocket`，TLS 开启即可。
 
 ## 云端编译（GitHub Actions）
@@ -25,6 +25,12 @@
 2. 修改 `.config` 定制固件（如需）
 3. Push 到 `main` 分支，或手动触发 `workflow_dispatch`
 4. 编译完成后在 Actions 页面下载 `OpenWrt-xiaomi-mir4` 产物
+
+此仓库默认已经开启 OpenWrt 19.07 下的 SSR Plus + Xray 集成。若本地或云端构建失败，建议先确认：
+
+- GitHub Actions 使用 Ubuntu 22.04
+- OpenWrt 19.07 需要 Python 2.7 环境
+- `make` 建议用串行日志模式排查失败点，避免并行编译隐藏真实错误
 
 ## 本地修改 `.config` 后再上传
 
