@@ -41,8 +41,10 @@ jobs:
           ./configure --prefix=/usr/local --enable-shared --enable-unicode=ucs4
           make -j$(nproc)
           sudo make install
+          sudo ldconfig
           sudo ln -sf /usr/local/bin/python2.7 /usr/local/bin/python2
           sudo ln -sf /usr/local/bin/python2.7 /usr/local/bin/python
+          export LD_LIBRARY_PATH=/usr/local/lib
           python2.7 -V
 
       - name: Update feeds
