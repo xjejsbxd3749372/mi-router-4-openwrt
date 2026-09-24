@@ -1,0 +1,71 @@
+name: Build OpenWrt firmware
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /opt/ghc /opt/hostedtoolcache
+          sudo apt-get clean
+          df -h
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential asciidoc binutils bzip2 gawk gettext git \
+            libncurses5-dev libncursesw5-dev libz-dev patch unzip zlib1g-dev \
+            lib32gcc-s1 libc6-dev-i386 subversion flex bison gcc-multilib g++-multilib \
+            p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto \
+            qemu-utils upx-ucl libelf-dev autoconf automake libtool autopoint \
+            device-tree-compiler rsync file wget python3 python3-distutils ccache \
+            perl-modules nodejs npm
+
+      - name: Setup Python 2.7 (OpenWrt 19.07 requires it)
+        run: |
+          cd /tmp
+          wget -q https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz
+          tar xzf Python-2.7.18.tgz
+          cd Python-2.7.18
+          ./configure --prefix=/usr/local --enable-shared --enable-unicode=ucs4
+          make -j$(nproc)
+          sudo make install
+          sudo ln -sf /usr/local/bin/python2.7 /usr/local/bin/python2
+          sudo ln -sf /usr/local/bin/python2.7 /usr/local/bin/python
+          python2.7 -V
+
+      - name: Update feeds
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Configure firmware (make defconfig)
+        run: |
+          make defconfig
+
+      - name: Download package sources
+        run: |
+          make download -j8
+          find dl -size -1024c -exec rm -f {} \;
+
+      - name: Compile firmware
+        run: |
+          make -j$(nproc)
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenWrt-xiaomi-mir4
+          path: bin/targets/ramips/mt7621/
+          if-no-files-found: error
