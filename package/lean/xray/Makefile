@@ -45,7 +45,7 @@ endef
 
 define Package/xray/install
 	$(INSTALL_DIR) $(1)/usr/bin/v2ray
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xray $(1)/usr/bin/v2ray/v2ray
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xray_softfloat $(1)/usr/bin/v2ray/v2ray
 endef
 
 $(eval $(call BuildPackage,xray))
