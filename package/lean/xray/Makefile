@@ -10,7 +10,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xray
-PKG_VERSION:=1.8.23
+PKG_VERSION:=26.3.27
 PKG_RELEASE:=1
 
 PKG_SOURCE:=Xray-linux-mips32le.zip
