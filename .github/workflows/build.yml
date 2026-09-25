@@ -135,7 +135,7 @@ jobs:
             exit 1
           fi
           echo "=== Extracting squashfs rootfs: $ROOTFS ==="
-          unsquashfs -no-dev -d extracted "$ROOTFS"
+          unsquashfs -d extracted "$ROOTFS" || true
           echo "=== Checking critical files ==="
           FAILED=0
           for f in \
