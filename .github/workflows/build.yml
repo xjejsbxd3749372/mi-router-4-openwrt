@@ -121,25 +121,42 @@ jobs:
           file $TARGET_DIR/*sysupgrade.bin || true
           echo ""
           echo "=== Verifying rootfs contents (unsquashfs) ==="
-          sudo apt-get install -y squashfs-tools
-          # Extract rootfs from sysupgrade.bin for verification
+          sudo apt-get install -y squashfs-tools >/dev/null 2>&1 || true
+          # OpenWrt 19.07 sysupgrade.bin is a TAR archive: sysupgrade-mir4/{CONTROL,kernel,root}
+          # 'root' is the squashfs rootfs (magic: hsqs)
           mkdir -p /tmp/rootfs-check
-          # sysupgrade.bin: first 2048 bytes are header, then kernel, then squashfs rootfs
-          # Find squashfs offset
-          OFFSET=$(hexdump -C $TARGET_DIR/*sysupgrade.bin | grep -m1 'hsqs' | awk '{print "0x"$1}')
-          if [ -n "$OFFSET" ]; then
-            dd if=$TARGET_DIR/*sysupgrade.bin of=/tmp/rootfs-check/rootfs.squashfs bs=1 skip=$((OFFSET)) 2>/dev/null
-            unsquashfs -d /tmp/rootfs-check/extracted /tmp/rootfs-check/rootfs.squashfs 2>/dev/null || true
-            echo "=== Checking critical files ==="
-            ls -la /tmp/rootfs-check/extracted/www/cgi-bin/luci 2>/dev/null || echo "WARNING: /www/cgi-bin/luci NOT FOUND"
-            ls -la /tmp/rootfs-check/extracted/etc/init.d/uhttpd 2>/dev/null || echo "WARNING: /etc/init.d/uhttpd NOT FOUND"
-            ls -la /tmp/rootfs-check/extracted/etc/init.d/dropbear 2>/dev/null || echo "WARNING: /etc/init.d/dropbear NOT FOUND"
-            ls -la /tmp/rootfs-check/extracted/www/index.html 2>/dev/null || echo "WARNING: /www/index.html NOT FOUND"
-            ls -la /tmp/rootfs-check/extracted/usr/bin/xray 2>/dev/null || echo "WARNING: /usr/bin/xray NOT FOUND"
-            ls -la /tmp/rootfs-check/extracted/etc/init.d/shadowsocksr 2>/dev/null || echo "WARNING: /etc/init.d/shadowsocksr NOT FOUND"
-          else
-            echo "WARNING: Could not find squashfs in sysupgrade.bin"
+          cd /tmp/rootfs-check
+          tar -xf $GITHUB_WORKSPACE/$TARGET_DIR/*sysupgrade.bin
+          echo "=== tar contents ==="
+          find . -type f -exec ls -la {} \;
+          ROOTFS=$(find . -type f -name 'root' | head -1)
+          if [ -z "$ROOTFS" ]; then
+            echo "ERROR: squashfs rootfs not found in sysupgrade.bin"
+            exit 1
           fi
+          echo "=== Extracting squashfs rootfs: $ROOTFS ==="
+          unsquashfs -d extracted "$ROOTFS"
+          echo "=== Checking critical files ==="
+          FAILED=0
+          for f in \
+            www/cgi-bin/luci \
+            etc/init.d/uhttpd \
+            etc/init.d/dropbear \
+            www/index.html \
+            usr/bin/xray \
+            etc/init.d/shadowsocksr ; do
+            if [ -e "extracted/$f" ]; then
+              echo "OK: /$f"
+            else
+              echo "MISSING: /$f"
+              FAILED=1
+            fi
+          done
+          if [ "$FAILED" = "1" ]; then
+            echo "=== VERIFY FAILED: critical files missing ==="
+            exit 1
+          fi
+          echo "=== VERIFY PASSED: all critical files present ==="
 
       - name: Upload build log (on failure)
         if: failure()
