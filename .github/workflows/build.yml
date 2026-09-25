@@ -86,13 +86,21 @@ jobs:
           make -j$(nproc) V=s > build.log 2>&1 || BUILD_FAILED=1
           if [ -n "$BUILD_FAILED" ]; then
             echo "=== BUILD FAILED: error lines ==="
-            grep -n -E "Error [0-9]+|error:|ERROR:|No such file or directory|undefined reference|cannot find|Permission denied" build.log | tail -120 || true
-            echo "=== last 80 lines ==="
-            tail -80 build.log
+            grep -n -E "Error [0-9]+|error:|ERROR:|No such file or directory|undefined reference|cannot find|Permission denied|Collected errors|satisfy_dependencies|pkg_run_script|out of space|No space left" build.log | tail -200 || true
+            echo "=== last 150 lines ==="
+            tail -150 build.log
             exit 1
           fi
           echo "=== BUILD SUCCEEDED ==="
           tail -20 build.log
+
+      - name: Upload build log (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
