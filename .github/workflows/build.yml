@@ -39,21 +39,27 @@ jobs:
             perl-modules nodejs npm
 
       - name: Install GCC 9 (OpenWrt 19.07 requires gcc <= 9)
-        continue-on-error: true
         run: |
           sudo apt-get install -y software-properties-common
           sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
           sudo apt-get update
           sudo apt-get install -y gcc-9 g++-9 gcc-9-multilib g++-9-multilib
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 || true
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90 || true
-          sudo update-alternatives --set gcc /usr/bin/gcc-9 || true
-          sudo update-alternatives --set g++ /usr/bin/g++-9 || true
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
+          sudo update-alternatives --set gcc /usr/bin/gcc-9
+          sudo update-alternatives --set g++ /usr/bin/g++-9
+          # Set environment variables for build
+          echo "CC=gcc-9" >> $GITHUB_ENV
+          echo "CXX=g++-9" >> $GITHUB_ENV
+          echo "HOSTCC=gcc-9" >> $GITHUB_ENV
+          echo "HOSTCXX=g++-9" >> $GITHUB_ENV
           echo "gcc: $(gcc --version | head -1)"
           echo "g++: $(g++ --version | head -1)"
 
       - name: Setup Python 2.7 (OpenWrt 19.07 requires it)
         run: |
+          sudo apt-get install -y libssl1.1 || sudo apt-get install -y libssl3
+          sudo apt-get install -y libncurses5-dev libgdbm-dev libnss3-dev libreadline-dev libffi-dev wget
           cd /tmp
           wget -q https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz
           tar xzf Python-2.7.18.tgz
@@ -64,7 +70,7 @@ jobs:
           sudo ldconfig
           sudo ln -sf /usr/local/bin/python2.7 /usr/local/bin/python2
           sudo ln -sf /usr/local/bin/python2.7 /usr/local/bin/python
-          export LD_LIBRARY_PATH=/usr/local/lib
+          echo "LD_LIBRARY_PATH=/usr/local/lib" >> $GITHUB_ENV
           python2.7 -V
 
       - name: Update feeds
@@ -82,7 +88,18 @@ jobs:
           find dl -size -1024c -exec rm -f {} \;
 
       - name: Compile firmware
+        env:
+          CC: gcc-9
+          CXX: g++-9
+          HOSTCC: gcc-9
+          HOSTCXX: g++-9
         run: |
+          echo "=== Build environment ==="
+          echo "gcc: $(gcc --version | head -1)"
+          echo "g++: $(g++ --version | head -1)"
+          echo "python: $(python --version 2>&1)"
+          echo "python2: $(python2 --version 2>&1)"
+          echo "=== Starting build ==="
           make -j$(nproc) V=s > build.log 2>&1 || BUILD_FAILED=1
           if [ -n "$BUILD_FAILED" ]; then
             echo "=== BUILD FAILED: error lines ==="
