@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
@@ -93,6 +93,36 @@ jobs:
           fi
           echo "=== BUILD SUCCEEDED ==="
           tail -20 build.log
+
+      - name: Verify firmware contents
+        run: |
+          echo "=== Checking firmware files ==="
+          TARGET_DIR="bin/targets/ramips/mt7621"
+          ls -la $TARGET_DIR/
+          echo ""
+          echo "=== Checking sysupgrade.bin structure ==="
+          file $TARGET_DIR/*sysupgrade.bin || true
+          echo ""
+          echo "=== Verifying rootfs contents (unsquashfs) ==="
+          sudo apt-get install -y squashfs-tools
+          # Extract rootfs from sysupgrade.bin for verification
+          mkdir -p /tmp/rootfs-check
+          # sysupgrade.bin: first 2048 bytes are header, then kernel, then squashfs rootfs
+          # Find squashfs offset
+          OFFSET=$(hexdump -C $TARGET_DIR/*sysupgrade.bin | grep -m1 'hsqs' | awk '{print "0x"$1}')
+          if [ -n "$OFFSET" ]; then
+            dd if=$TARGET_DIR/*sysupgrade.bin of=/tmp/rootfs-check/rootfs.squashfs bs=1 skip=$((OFFSET)) 2>/dev/null
+            unsquashfs -d /tmp/rootfs-check/extracted /tmp/rootfs-check/rootfs.squashfs 2>/dev/null || true
+            echo "=== Checking critical files ==="
+            ls -la /tmp/rootfs-check/extracted/www/cgi-bin/luci 2>/dev/null || echo "WARNING: /www/cgi-bin/luci NOT FOUND"
+            ls -la /tmp/rootfs-check/extracted/etc/init.d/uhttpd 2>/dev/null || echo "WARNING: /etc/init.d/uhttpd NOT FOUND"
+            ls -la /tmp/rootfs-check/extracted/etc/init.d/dropbear 2>/dev/null || echo "WARNING: /etc/init.d/dropbear NOT FOUND"
+            ls -la /tmp/rootfs-check/extracted/www/index.html 2>/dev/null || echo "WARNING: /www/index.html NOT FOUND"
+            ls -la /tmp/rootfs-check/extracted/usr/bin/xray 2>/dev/null || echo "WARNING: /usr/bin/xray NOT FOUND"
+            ls -la /tmp/rootfs-check/extracted/etc/init.d/shadowsocksr 2>/dev/null || echo "WARNING: /etc/init.d/shadowsocksr NOT FOUND"
+          else
+            echo "WARNING: Could not find squashfs in sysupgrade.bin"
+          fi
 
       - name: Upload build log (on failure)
         if: failure()
