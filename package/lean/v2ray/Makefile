@@ -8,14 +8,19 @@
 
 include $(TOPDIR)/rules.mk
 
+# NOTE: 原 v2ray/v2ray-core 已归档(2020年停更,最后 v4.31.0)且 v4.x 不支持 VLESS。
+# 已更换为 v2fly/v2ray-core(社区继续版)。但 v5.x 源码编译需 Go 1.16+，
+# OpenWrt 19.07 工具链仅 Go 1.13 无法编译；且 v2fly 官方 mips32le 预编译为
+# hard-float(fp_abi=1)，小米路由4 mipsel_24kc 为 soft-float 不兼容。
+# 故本包已弃用，由 xray 替代(支持 VLESS 且官方提供 soft-float 预编译)。
 PKG_NAME:=v2ray
-PKG_VERSION:=4.23.1
+PKG_VERSION:=5.53.0
 PKG_RELEASE:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/v2ray-core-$(PKG_VERSION)
 
 PKG_SOURCE:=v2ray-core-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/v2ray/v2ray-core/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=474b3aeed069d9867f7603a0544abcc0f31386cef9254423577ab752fc8d4dcc
+PKG_SOURCE_URL:=https://codeload.github.com/v2fly/v2ray-core/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=skip
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
