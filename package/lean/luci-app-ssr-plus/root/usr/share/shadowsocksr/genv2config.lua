@@ -6,6 +6,16 @@ local local_port = arg[3] or "0"
 local socks_port = arg[4] or "0"
 local server = ucursor:get_all("shadowsocksr", server_section)
 
+-- CF Workers (ygkkk) VLESS/Trojan 节点：SNI 与 Host 缺省时自动回退到服务器域名，避免 403
+local sni = server.tls_host
+if (not sni or sni == "") and server.server and server.server:match("[%w%-]+%.[%w%-]+") and not server.server:match("^%d") then
+	sni = server.server
+end
+local ws_host = server.ws_host
+if not ws_host or ws_host == "" then
+	ws_host = sni
+end
+
 local v2ray = {
 log = {
 	-- error = "/var/ssrplus.log",
@@ -61,7 +71,7 @@ log = {
 		streamSettings = {
 			network = server.transport,
 			security = (server.tls == '1') and "tls" or "none",
-			tlsSettings = {allowInsecure = (server.insecure ~= "0") and true or false,serverName=server.tls_host,},
+			tlsSettings = {allowInsecure = (server.insecure ~= "0") and true or false,serverName=sni,},
 			kcpSettings = (server.transport == "kcp") and {
 				mtu = tonumber(server.mtu),
 				tti = tonumber(server.tti),
@@ -74,11 +84,9 @@ log = {
 					type = server.kcp_guise
 				}
 			} or nil,
-			wsSettings = (server.transport == "ws") and (server.ws_path ~= nil or server.ws_host ~= nil) and {
+			wsSettings = (server.transport == "ws") and {
 				path = server.ws_path,
-				headers = (server.ws_host ~= nil) and {
-					Host = server.ws_host
-				} or nil,
+				headers = { Host = ws_host },
 			} or nil,
 			httpSettings = (server.transport == "h2") and {
 				path = server.h2_path,
