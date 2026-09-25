@@ -5,6 +5,8 @@ PKG_VERSION:=176
 PKG_RELEASE:=3
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
+# luci-base/host 提供 po2lmo 工具（install 时编译 .po → .lmo 需要）
+PKG_BUILD_DEPENDS:=luci-base/host
 
 include $(INCLUDE_DIR)/package.mk
 
