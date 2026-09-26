@@ -312,7 +312,7 @@ define Device/xiaomi_mir4
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
   DEVICE_TITLE := Xiaomi Mi Router 4
   DEVICE_PACKAGES := \
-  kmod-mt7603 kmod-mt76x2  wpad-basic uboot-envtools
+  uboot-envtools
 endef
 TARGET_DEVICES += xiaomi_mir4
 
