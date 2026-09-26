@@ -79,7 +79,7 @@ jobs:
           ./scripts/feeds install -a
           # Update MTK feeds for closed-source WiFi driver
           ./scripts/feeds update -f mtk
-          ./scripts/feeds install -a -p mtk
+          ./scripts/feeds install -a
 
       - name: Configure firmware (make defconfig)
         run: |
