@@ -80,6 +80,9 @@ jobs:
           # Update MTK feeds for closed-source WiFi driver
           ./scripts/feeds update -f mtk
           ./scripts/feeds install -a
+          # MTK's luci apps reference luci.mk via LEDE-17.01 layout, which
+          # breaks luci feed package registration on OpenWrt 19.07. Remove them.
+          rm -rf package/feeds/mtk/mtk-luci-plugin package/feeds/mtk/luci-app-mtkwifi package/feeds/mtk/luci-app-webconsole
 
       - name: Configure firmware (make defconfig)
         run: |
@@ -146,7 +149,7 @@ jobs:
             etc/init.d/uhttpd \
             etc/init.d/dropbear \
             www/index.html \
-            usr/bin/xray \
+            usr/bin/v2ray/v2ray \
             etc/init.d/shadowsocksr ; do
             if [ -e "extracted/$f" ]; then
               echo "OK: /$f"
