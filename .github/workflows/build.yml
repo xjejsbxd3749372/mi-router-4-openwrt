@@ -77,12 +77,24 @@ jobs:
         run: |
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-          # Update MTK feeds for closed-source WiFi driver
-          ./scripts/feeds update -f mtk
-          ./scripts/feeds install -a
-          # MTK's luci apps reference luci.mk via LEDE-17.01 layout, which
-          # breaks luci feed package registration on OpenWrt 19.07. Remove them.
-          rm -rf package/feeds/mtk/mtk-luci-plugin package/feeds/mtk/luci-app-mtkwifi package/feeds/mtk/luci-app-webconsole
+
+      - name: Download Lean MT closed-source WiFi driver source
+        run: |
+          # Lean (coolsnowwolf/lede) ships the MediaTek closed-source WiFi
+          # drivers as in-tree source (package/lean/mt): mt7603e (2.4G) +
+          # mt7612e/mt76x2e (5G, MT7612) + mt_wifi. These compile against
+          # kernel 4.14, unlike Nossiac's prebuilt .ko (kernel 4.4 only).
+          cd $GITHUB_WORKSPACE
+          mkdir -p package/lean
+          wget -q -O /tmp/lede.tar.gz https://codeload.github.com/coolsnowwolf/lede/tar.gz/refs/heads/master
+          tar xzf /tmp/lede.tar.gz -C package/lean lede-master/package/lean/mt
+          mv package/lean/lede-master/package/lean/mt package/lean/mt
+          rm -rf package/lean/lede-master
+          # mt7615d (MT7615 DBDC) is not needed for Xiaomi Mi Router 4 (MT7612 5G)
+          rm -rf package/lean/mt/drivers/mt7615d
+          echo "=== Lean MT driver tree ==="
+          ls -la package/lean/mt/
+          ls -la package/lean/mt/drivers/
 
       - name: Configure firmware (make defconfig)
         run: |
