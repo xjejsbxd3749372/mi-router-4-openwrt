@@ -98,7 +98,21 @@ jobs:
 
       - name: Configure firmware (make defconfig)
         run: |
+          echo "=== DEBUG: package/feeds/luci softlinks ==="
+          ls -la package/feeds/luci/ 2>&1 | head -6 || true
+          echo "=== DEBUG: package/lean/mt drivers ==="
+          ls -la package/lean/mt/drivers/ 2>&1 || true
+          echo "=== DEBUG: find luci/mt Makefiles (scan depth 5) ==="
+          find -L package -mindepth 1 -maxdepth 5 -name Makefile 2>/dev/null | grep -E 'feeds/luci/(luci|luci-base)/Makefile|lean/mt' | head -15 || true
+          echo "=== DEBUG: force rebuild tmpinfo ==="
+          rm -f tmp/.config-package.in tmp/.packageinfo tmp/.packagedeps tmp/.packageauxvars
+          rm -rf tmp/info
+          echo "=== running make defconfig ==="
           make defconfig
+          echo "=== DEBUG: .config luci/mt state after defconfig ==="
+          grep -E 'CONFIG_PACKAGE_(luci|kmod-mt76|mt_wifi|mtk_apcli|mtkiappd)' .config || true
+          echo "=== DEBUG: tmpinfo luci/mt package count ==="
+          grep -cE 'config PACKAGE_luci$|config PACKAGE_kmod-mt7603e|config PACKAGE_mt_wifi' tmp/.config-package.in 2>/dev/null || true
 
       - name: Download package sources
         run: |
