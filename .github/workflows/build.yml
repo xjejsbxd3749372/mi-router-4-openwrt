@@ -96,7 +96,7 @@ jobs:
           ls -la package/lean/mt/
           ls -la package/lean/mt/drivers/
 
-      - name: Configure firmware (make olddefconfig)
+      - name: Configure firmware (make defconfig)
         run: |
           echo "=== DEBUG: package/feeds/luci softlinks ==="
           ls -la package/feeds/luci/ 2>&1 | head -6 || true
@@ -105,9 +105,9 @@ jobs:
           echo "=== DEBUG: force rebuild tmpinfo ==="
           rm -f tmp/.config-package.in tmp/.packageinfo tmp/.packagedeps tmp/.packageauxvars
           rm -rf tmp/info
-          echo "=== running make olddefconfig ==="
-          make olddefconfig
-          echo "=== DEBUG: .config luci/mt state after olddefconfig ==="
+          echo "=== running make defconfig ==="
+          make defconfig
+          echo "=== DEBUG: .config luci/mt state after defconfig ==="
           grep -E 'CONFIG_PACKAGE_(luci|kmod-mt76|mt_wifi|mtk_apcli|mtkiappd)' .config || true
           echo "=== DEBUG: MTK_CHIP state ==="
           grep -E 'CONFIG_MTK_CHIP' .config || true
