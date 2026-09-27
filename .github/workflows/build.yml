@@ -113,6 +113,14 @@ jobs:
           grep -E 'CONFIG_MTK_CHIP' .config || true
           echo "=== DEBUG: tmpinfo luci/mt package count ==="
           grep -cE 'config PACKAGE_luci$|config PACKAGE_kmod-mt7603e|config PACKAGE_mt_wifi' tmp/.config-package.in 2>/dev/null || true
+          echo "=== DEBUG: luci full Kconfig def ==="
+          grep -n -B6 -A30 'config PACKAGE_luci$' tmp/.config-package.in 2>/dev/null || true
+          echo "=== DEBUG: luci-base Kconfig def ==="
+          grep -n -B4 -A8 'config PACKAGE_luci-base' tmp/.config-package.in 2>/dev/null || true
+          echo "=== DEBUG: kmod-mt7603e Kconfig def ==="
+          grep -n -B4 -A12 'config PACKAGE_kmod-mt7603e' tmp/.config-package.in 2>/dev/null || true
+          echo "=== DEBUG: menu LuCI lines ==="
+          grep -n 'menu "LuCI"\|menu "1. Collections"\|menu "2. Modules"\|^endmenu\|^if \|^endif' tmp/.config-package.in 2>/dev/null | sed -n '1,40p' || true
 
       - name: Download package sources
         run: |
